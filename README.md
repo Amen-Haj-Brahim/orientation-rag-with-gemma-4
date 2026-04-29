@@ -1,183 +1,61 @@
-# RAG with Gemma - PDF Question Answering
+# RAG with Gemma - CSV Question Answering
 
-A Retrieval-Augmented Generation (RAG) system using Google's Gemma model to query PDF documents. Supports Arabic text.
+This project builds a LangChain RAG pipeline over CSV orientation-guide data.
+It loads rows from `data/*.csv`, converts each row into semantic documents,
+embeds them with Google embeddings, stores them in ChromaDB, and answers
+questions with a Google/Gemma chat model.
 
-## Features
+## Setup
 
-- **Gemma 4** via Google AI Studio
-- **LangChain** for RAG pipeline
-- **ChromaDB** for vector storage
-- **Arabic text support** with normalization
-- PDF loading with source tracking
-
-## Prerequisites
-
-1. Python 3.10+
-2. Google AI Studio API key
-
-## Installation
-
-### 1. Clone/Create Project
-
-```bash
-mkdir gemma-rag
-cd gemma-rag
-```
-
-### 2. Create Virtual Environment
-
-```bash
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
-```
-
-### 3. Install Dependencies
+1. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure API Key
+2. Configure `.env`:
+
+```env
+GOOGLE_API_KEY=your_google_api_key_here
+CSV_DIRECTORY=data
+CHROMA_DB_DIR=chroma_db
+EMBEDDING_MODEL=gemini-embedding-001
+GEMMA_MODEL=gemma-4-26b-a4b-it
+CHUNK_SIZE=3000
+CHUNK_OVERLAP=500
+```
+
+3. Put CSV files in `data/`.
+
+4. Rebuild the vector store after changing CSV loading or text normalization:
 
 ```bash
-copy .env.example .env
+python main.py --reindex
 ```
 
-Edit `.env` and set your Google API key:
-
-```
-GOOGLE_API_KEY=your_google_api_key_here
-```
-
-Get your API key from: https://aistudio.google.com/app/apikey
-
-### 5. Add PDF Files
-
-Place your PDF files in the `data/` directory:
-
-```
-project/
-├── data/
-│   ├── document1.pdf
-│   ├── document2.pdf
-│   └── ...
-```
-
-## Usage
-
-### Run the Application
+5. Run normally:
 
 ```bash
 python main.py
 ```
 
-### Options
+## Debug Retrieval
 
-- `--reindex` - Force re-indexing of all PDFs (useful when adding new documents)
-
-```bash
-python main.py --reindex
-```
-
-### Example Session
-
-```
-============================================================
-RAG with Gemma - PDF Question Answering
-============================================================
-Loading PDFs from: data
-Loaded: document.pdf (10 pages)
-Split 10 documents into 45 chunks
-Created vector store with 45 documents
-Initializing Gemma model...
-Creating RAG pipeline...
-
-============================================================
-Ready! Enter your questions (or 'quit' to exit)
-============================================================
-
-You: What is this document about?
-
-Thinking...
-
-Answer:
-This document discusses the main topics covered in the PDF files...
-[Content from retrieved documents]
-
-Sources:
-- document1.pdf
-- document2.pdf
-
-You: quit
-Goodbye!
-```
-
-## Project Structure
-
-```
-project/
-├── .env.example          # Environment template
-├── requirements.txt     # Python dependencies
-├── main.py             # Entry point
-├── README.md           # This file
-├── data/               # PDF input directory
-├── chroma_db/          # Vector database (created on first run)
-└── src/
-    ├── pdf_loader.py       # PDF loading
-    ├── text_splitter.py    # Text chunking
-    ├── vector_store.py    # ChromaDB setup
-    ├── retrieval.py       # Document retrieval
-    └── rag_pipeline.py    # RAG chain
-```
-
-## Configuration
-
-Edit `.env` to customize:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GOOGLE_API_KEY` | (required) | Your Google API key |
-| `PDF_DIRECTORY` | `data` | Directory containing PDFs |
-| `CHROMA_DB_DIR` | `chroma_db` | Vector database directory |
-| `EMBEDDING_MODEL` | `gemini-embedding-001` | Embedding model |
-| `GEMMA_MODEL` | `gemma-4-2b` | Gemma model |
-| `CHUNK_SIZE` | `1000` | Text chunk size |
-| `CHUNK_OVERLAP` | `200` | Chunk overlap |
-
-## Arabic Support
-
-The system includes:
-- Arabic text normalization (removes diacritics)
-- Arabic-aware text splitting
-- Bilingual prompt templates (Arabic/English)
-
-## Troubleshooting
-
-### No API Key
-
-```
-Error: Please set your GOOGLE_API_KEY in the .env file
-```
-
-**Solution**: Add your API key to `.env`
-
-### No PDF Files Found
-
-```
-Error: No PDF files found in: data
-```
-
-**Solution**: Create `data/` directory and add PDF files
-
-### Vector Store Error
-
-If you encounter vector store errors, try re-indexing:
+Run:
 
 ```bash
-python main.py --reindex
+python test.py
 ```
 
-## License
+The script rebuilds `chroma_db`, prints sample loaded documents, and tests a few
+Arabic/French retrieval queries.
 
-MIT"# orientation-rag-with-gemma-4" 
+## Notes
+
+- The CSV should be UTF-8. The included loader uses `utf-8-sig` to handle files
+  with a BOM.
+- If Arabic appears as `Ø§Ù...` in old Windows PowerShell output, check the
+  actual Python value with `unicode_escape`; the data can still be correct
+  internally while the terminal display is wrong.
+- The RAG chain returns source documents, including CSV file, row id, program
+  code, university, establishment, and domain metadata where available.

@@ -20,7 +20,7 @@ def retrieve_documents(retriever, query: str, k: int = 4) -> List[Document]:
     Returns:
         List of relevant Document objects
     """
-    docs = retriever.get_relevant_documents(query)
+    docs = retriever.invoke(query)
     return docs[:k]
 
 
@@ -37,8 +37,9 @@ def format_retrieved_docs(docs: List[Document]) -> str:
     formatted = []
     for i, doc in enumerate(docs, 1):
         source = doc.metadata.get('source_file', 'Unknown')
-        page = doc.metadata.get('page', 'N/A')
-        formatted.append(f"--- Document {i} (Source: {source}, Page: {page}) ---\n{doc.page_content}")
+        row_id = doc.metadata.get('row_id', doc.metadata.get('row_index', 'N/A'))
+        code = doc.metadata.get('program_code', 'N/A')
+        formatted.append(f"--- Document {i} (Source: {source}, Row: {row_id}, Code: {code}) ---\n{doc.page_content}")
     return "\n\n".join(formatted)
 
 

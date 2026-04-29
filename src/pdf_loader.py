@@ -10,7 +10,7 @@ def load_pdfs_from_directory(directory_path: str) -> List[Document]:
     documents = []
     
     if not os.path.exists(directory_path):
-        print(f"❌ Error: Directory not found at {directory_path}")
+        print(f"Error: Directory not found at {directory_path}")
         return []
     
     pdf_files = [f for f in os.listdir(directory_path) if f.lower().endswith('.pdf')]
@@ -44,10 +44,10 @@ def load_pdfs_from_directory(directory_path: str) -> List[Document]:
                 
                 documents.append(doc)
             
-            print(f"✅ Successfully extracted {len(extracted_elements)} elements from {pdf_file}")
+            print(f"Successfully extracted {len(extracted_elements)} elements from {pdf_file}")
             
         except Exception as e:
-            print(f"❌ Failed to process {pdf_file}: {str(e)}")
+            print(f"Failed to process {pdf_file}: {str(e)}")
             
     print(f"Total documents extracted: {len(documents)}")
     return documents

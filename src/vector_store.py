@@ -5,9 +5,8 @@ Creates and manages ChromaDB vector store for document embeddings.
 """
 
 import os
+import time
 from typing import List, Optional
-import chromadb
-from chromadb.config import Settings
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from langchain_community.vectorstores import Chroma
@@ -34,7 +33,9 @@ def create_vector_store(
     documents: List[Document],
     embeddings,
     persist_directory: str = "chroma_db",
-    collection_name: str = "pdf_documents"
+    collection_name: str = "pdf_documents",
+    batch_size: int = 50,
+    requests_per_minute: int = 60
 ) -> Chroma:
     """
     Create ChromaDB vector store from documents.
@@ -51,13 +52,31 @@ def create_vector_store(
     # Create persist directory if it doesn't exist
     os.makedirs(persist_directory, exist_ok=True)
     
-    # Create vector store
-    vector_store = Chroma.from_documents(
-        documents=documents,
-        embedding=embeddings,
+    vector_store = Chroma(
         persist_directory=persist_directory,
+        embedding_function=embeddings,
         collection_name=collection_name
     )
+
+    if not documents:
+        print("Created empty vector store")
+        return vector_store
+
+    total = len(documents)
+    request_count = 0
+
+    for start in range(0, total, batch_size):
+        end = min(start + batch_size, total)
+        batch = documents[start:end]
+
+        vector_store.add_documents(batch)
+        request_count += 1
+
+        print(f"Embedded documents {end}/{total}")
+
+        if requests_per_minute > 0 and request_count % requests_per_minute == 0 and end < total:
+            print("Pausing for 65 seconds to stay under the embedding rate limit...")
+            time.sleep(65)
     
     print(f"Created vector store with {len(documents)} documents")
     return vector_store

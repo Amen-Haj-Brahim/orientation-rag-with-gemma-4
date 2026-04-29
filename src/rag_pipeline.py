@@ -5,21 +5,20 @@ Combines retrieval with Gemma for question answering.
 Uses LangChain 1.x API.
 """
 
-from typing import Optional, List
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
-from langchain_core.documents import Document
-from langchain_core.runnables import RunnableSequence
 from langchain_core.runnables.passthrough import RunnablePassthrough
 
 
 
 
 # Default prompt template for Arabic/English bilingual support
-DEFAULT_TEMPLATE = """You are a verification assistant.
-Your task is to answer the question ONLY using the provided Context. 
+DEFAULT_TEMPLATE = """You are an orientation guidance assistant.
+Your task is to answer the question ONLY using the provided Context.
 
-If the information is in the Context, provide the answer and specify which PDF source it came from.
+The Context contains CSV rows from an orientation guide.
+Answer directly and naturally. Do not mention source files, document numbers, row ids, row indexes, or internal metadata in the answer.
+If the answer contains multiple results, present them as a clean list with the useful fields only, such as score, program, university, establishment, duration, requirements, or career paths.
 If the information is NOT in the Context, say: "المعلومة غير موجودة في المعطيات."
 
 Context:
@@ -50,20 +49,35 @@ def create_rag_pipeline(
         input_variables=["context", "question"]
     )
     
-    # Create the document question answering chain using LCEL
     def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
+        formatted_docs = []
+        for i, doc in enumerate(docs, 1):
+            metadata = doc.metadata
+            source = metadata.get("source_file", "unknown")
+            row_id = metadata.get("row_id", metadata.get("row_index", "unknown"))
+            code = metadata.get("program_code", "unknown")
+            formatted_docs.append(
+                f"[Document {i} | source={source} | row={row_id} | code={code}]\n"
+                f"{doc.page_content}"
+            )
+        return "\n\n".join(formatted_docs)
     
-    # Build the RAG chain using LangChain Expression Language (LCEL)
-    # The chain accepts {"input": question} and returns the LLM response string
+    # The chain accepts {"input": question} and returns both answer and sources.
     rag_chain = (
         RunnablePassthrough()
         .assign(
-            context=lambda x: retriever.invoke(x["input"])
+            source_documents=lambda x: retriever.invoke(x["input"])
         )
-        | (lambda x: {"context": format_docs(x["context"]), "question": x["input"]})
-        | prompt
-        | llm
+        .assign(
+            context=lambda x: format_docs(x["source_documents"])
+        )
+        .assign(
+            answer=(
+                lambda x: {"context": x["context"], "question": x["input"]}
+            )
+            | prompt
+            | llm
+        )
     )
     
     return rag_chain
@@ -110,8 +124,12 @@ def answer_question(
     Returns:
         Dictionary with answer and sources
     """
-    # Invoke the chain with the question
     result = rag_pipeline.invoke({"input": question})
+    source_documents = []
+
+    if isinstance(result, dict):
+        source_documents = result.get("source_documents", [])
+        result = result.get("answer", "")
 
     # Extract clean text from response
     if hasattr(result, "content"):
@@ -126,7 +144,7 @@ def answer_question(
 
     return {
         "answer": clean_answer,
-        "source_documents": []
+        "source_documents": source_documents
     }
 
 
