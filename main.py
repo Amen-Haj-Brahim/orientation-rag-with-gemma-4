@@ -6,7 +6,7 @@ from src.csv_loader import load_csv_from_directory
 from src.text_splitter import split_documents, normalize_arabic_text
 from src.vector_store import create_embeddings_model, create_vector_store, load_vector_store, get_retriever
 from src.rag_pipeline import create_gemma_llm, create_rag_pipeline, answer_question, format_answer
-
+import streamlit as st
 
 def configure_console():
     try:
@@ -19,8 +19,18 @@ def configure_console():
 def load_config():
     load_dotenv()
     
+    # Try to get API key from Streamlit secrets first, then fall back to environment variables
+    api_key = None
+    try:
+        api_key = st.secrets.get("GOOGLE_API_KEY")
+    except:
+        pass
+    
+    if not api_key:
+        api_key = os.getenv("GOOGLE_API_KEY")
+    
     return {
-        "api_key": os.getenv("GOOGLE_API_KEY"),
+        "api_key": api_key,
         "csv_directory": os.getenv("CSV_DIRECTORY", "data"),
         "chroma_db_dir": os.getenv("CHROMA_DB_DIR", "chroma_db"),
         "embedding_model": os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
