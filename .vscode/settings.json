@@ -1,3 +1,4 @@
 {
+  "postman.settings.dotenv-detection-notification-visibility": false,
   "editor.defaultFormatter": "mikoz.composite-formatter"
 }

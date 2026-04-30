@@ -1,9 +1,3 @@
-"""
-Main Entry Point
-
-RAG pipeline for querying CSV data using Gemma.
-"""
-
 import os
 import shutil
 import sys
@@ -15,7 +9,6 @@ from src.rag_pipeline import create_gemma_llm, create_rag_pipeline, answer_quest
 
 
 def configure_console():
-    """Use UTF-8 output when the host console supports reconfiguration."""
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
@@ -24,14 +17,11 @@ def configure_console():
 
 
 def load_config():
-    """Load configuration from environment variables."""
     load_dotenv()
     
-    csv_directory = os.getenv("CSV_DIRECTORY") or os.getenv("PDF_DIRECTORY", "data")
-
     return {
         "api_key": os.getenv("GOOGLE_API_KEY"),
-        "csv_directory": csv_directory,
+        "csv_directory": os.getenv("CSV_DIRECTORY", "data"),
         "chroma_db_dir": os.getenv("CHROMA_DB_DIR", "chroma_db"),
         "embedding_model": os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
         "gemma_model": os.getenv("GEMMA_MODEL", "gemma-4-2b"),
@@ -44,16 +34,6 @@ def load_config():
 
 
 def initialize_rag(config: dict, force_reindex: bool = False):
-    """
-    Initialize the RAG pipeline.
-    
-    Args:
-        config: Configuration dictionary
-        force_reindex: Force re-indexing of documents
-        
-    Returns:
-        Tuple of (rag_pipeline, vector_store)
-    """
     api_key = config["api_key"]
     
     if not api_key or api_key == "your_api_key_here":
@@ -61,11 +41,9 @@ def initialize_rag(config: dict, force_reindex: bool = False):
         print("Get your API key from: https://aistudio.google.com/app/apikey")
         sys.exit(1)
     
-    # Create embeddings model
     print("Initializing embeddings model...")
     embeddings = create_embeddings_model(api_key, config["embedding_model"])
     
-    # Try to load existing vector store
     vector_store = None
     if force_reindex and os.path.exists(config["chroma_db_dir"]):
         print("Deleting old vector store...")
@@ -75,11 +53,9 @@ def initialize_rag(config: dict, force_reindex: bool = False):
         print("Loading existing vector store...")
         vector_store = load_vector_store(config["chroma_db_dir"], embeddings, "csv_documents")
     
-    # Create new vector store if needed
     if vector_store is None:
         print("Creating new vector store...")
         
-        # Load CSV files
         print(f"Loading CSV files from: {config['csv_directory']}")
         print(f"CSV document mode: {config['csv_document_mode']}")
         try:
@@ -96,12 +72,10 @@ def initialize_rag(config: dict, force_reindex: bool = False):
             print("Error: No CSV documents were loaded. Check CSV_DIRECTORY and file encoding.")
             sys.exit(1)
         
-        # Normalize Arabic text
         print("Normalizing Arabic text...")
         for doc in documents:
             doc.page_content = normalize_arabic_text(doc.page_content)
         
-        # Split documents
         print("Splitting documents into chunks...")
         chunks = split_documents(
             documents,
@@ -109,7 +83,6 @@ def initialize_rag(config: dict, force_reindex: bool = False):
             config["chunk_overlap"]
         )
         
-        # Create vector store
         print("Creating vector store...")
         vector_store = create_vector_store(
             chunks,
@@ -120,15 +93,12 @@ def initialize_rag(config: dict, force_reindex: bool = False):
             requests_per_minute=config["embedding_requests_per_minute"]
         )
     
-    # Create retriever
     print("Creating retriever...")
     retriever = get_retriever(vector_store, {"k": 10})
     
-    # Create Gemma LLM
     print("Initializing Gemma model...")
     llm = create_gemma_llm(api_key, config["gemma_model"])
     
-    # Create RAG pipeline
     print("Creating RAG pipeline...")
     rag_pipeline = create_rag_pipeline(llm, retriever)
     
@@ -136,27 +106,20 @@ def initialize_rag(config: dict, force_reindex: bool = False):
 
 
 def main():
-    """Main function."""
     configure_console()
 
     print("=" * 60)
     print("RAG with Gemma - CSV Question Answering")
     print("=" * 60)
     
-    # Load configuration
     config = load_config()
-    
-    # Check for --reindex flag
     force_reindex = "--reindex" in sys.argv
-    
-    # Initialize RAG pipeline
-    rag_pipeline, vector_store = initialize_rag(config, force_reindex)
+    rag_pipeline, _ = initialize_rag(config, force_reindex)
     
     print("\n" + "=" * 60)
     print("Ready! Enter your questions (or 'quit' to exit)")
     print("=" * 60)
     
-    # Interactive loop
     while True:
         try:
             question = input("\nYou: ").strip()
@@ -170,12 +133,10 @@ def main():
             
             question = normalize_arabic_text(question)
             
-            # Get answer
             print("\nThinking...")
             
             result = answer_question(rag_pipeline, question)
             
-            # Display answer
             print("\n" + format_answer(result))
             
         except KeyboardInterrupt:

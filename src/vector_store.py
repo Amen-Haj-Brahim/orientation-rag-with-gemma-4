@@ -1,9 +1,3 @@
-"""
-Vector Store Module
-
-Creates and manages ChromaDB vector store for document embeddings.
-"""
-
 import os
 import time
 from typing import List, Optional
@@ -13,16 +7,6 @@ from langchain_community.vectorstores import Chroma
 
 
 def create_embeddings_model(api_key: str, model: str = "gemini-embedding-001") -> GoogleGenerativeAIEmbeddings:
-    """
-    Create embeddings model for Google Generative AI.
-    
-    Args:
-        api_key: Google API key
-        model: Embedding model name
-        
-    Returns:
-        GoogleGenerativeAIEmbeddings instance
-    """
     return GoogleGenerativeAIEmbeddings(
         model=model,
         google_api_key=api_key
@@ -33,23 +17,10 @@ def create_vector_store(
     documents: List[Document],
     embeddings,
     persist_directory: str = "chroma_db",
-    collection_name: str = "pdf_documents",
+    collection_name: str = "csv_documents",
     batch_size: int = 50,
     requests_per_minute: int = 60
 ) -> Chroma:
-    """
-    Create ChromaDB vector store from documents.
-    
-    Args:
-        documents: List of Document objects
-        embeddings: Embeddings model
-        persist_directory: Directory to persist the database
-        collection_name: Name of the collection
-        
-    Returns:
-        Chroma vector store instance
-    """
-    # Create persist directory if it doesn't exist
     os.makedirs(persist_directory, exist_ok=True)
     
     vector_store = Chroma(
@@ -85,19 +56,8 @@ def create_vector_store(
 def load_vector_store(
     persist_directory: str,
     embeddings,
-    collection_name: str = "pdf_documents"
+    collection_name: str = "csv_documents"
 ) -> Optional[Chroma]:
-    """
-    Load existing vector store from disk.
-    
-    Args:
-        persist_directory: Directory where the database is persisted
-        embeddings: Embeddings model
-        collection_name: Name of the collection
-        
-    Returns:
-        Chroma vector store instance or None if not found
-    """
     if not os.path.exists(persist_directory):
         return None
     
@@ -114,16 +74,6 @@ def load_vector_store(
 
 
 def get_retriever(vector_store: Chroma, search_kwargs: Optional[dict] = None):
-    """
-    Create a retriever from vector store.
-    
-    Args:
-        vector_store: Chroma vector store
-        search_kwargs: Search parameters (e.g., k=4 for top 4 results)
-        
-    Returns:
-        Retriever instance
-    """
     if search_kwargs is None:
         search_kwargs = {"k": 4}
     
