@@ -34,7 +34,7 @@ def load_config():
         "csv_directory": os.getenv("CSV_DIRECTORY", "data"),
         "chroma_db_dir": os.getenv("CHROMA_DB_DIR", "chroma_db"),
         "embedding_model": os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
-        "gemma_model": os.getenv("GEMMA_MODEL", "gemma-4-2b"),
+        "gemma_model": os.getenv("GEMMA_MODEL", "gemma-4-26b-a4b-it"),
         "chunk_size": int(os.getenv("CHUNK_SIZE", "3000")),
         "chunk_overlap": int(os.getenv("CHUNK_OVERLAP", "500")),
         "csv_document_mode": os.getenv("CSV_DOCUMENT_MODE", "summary"),
