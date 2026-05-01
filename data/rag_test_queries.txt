@@ -1,0 +1,44 @@
+RAG TEST QUERIES: TUNISIAN BAC ORIENTATION (guide_14-8-2025.csv)
+
+1. DIRECT RETRIEVAL (FACT-CHECKING)
+- What is the Arabic name and code for the 'Licence en Arabe' at the Faculty of Human and Social Sciences in Tunis?
+- According to the guide, how many years of study are required for a degree in 'Sciences de l'Informatique'?
+- List the professional prospects (الآفاق المهنية) for a student graduating with an 'الإجازة في العربية'.
+- Which university offers the certificate with the code 10101?
+
+2. CONDITIONAL & FILTERED QUERIES
+- Identify all the degrees in the 'Sousse' governorate that are specifically for the 'Economie et Gestion' (اقتصاد وتصرف) baccalaureate type.
+- Which certificates in the field of 'Arts et Langues' require a special exam (تتطلب اختبارات) or have special conditions (لها شروط خاصة)?
+- List the institutions that offer 'Licence en Droit' (Law) in the Tunis governorate.
+
+3. SCORE COMPARISON (NUMERICAL ANALYSIS)
+- How did the minimum score (score2025) for 'Licence en Arabe' (code 10101) for the 'Lettres' baccalaureate compare to the score in 2024?
+- Find the certificate that had the highest score in 2025 for the 'Mathématiques' baccalaureate.
+- Based on the data, which degree saw the biggest jump in its score between 2023 and 2025?
+
+4. MESSY, SHORTHAND & BILINGUAL (ROBUSTNESS TESTS)
+- "scores license arabe 2024"
+- "code 10101 score 2025"
+- "isamm computer science 2023"
+- "last year score law tunis"
+- "fac de medecine tunis score"
+- "license informatique fst score 2025"
+- "orientation bac math score prep"
+- "ijaza arabia tunis univ"
+- "score bac technique prep"
+
+5. ARABIC & FRENCH QUERIES
+- ما هو مجموع نقاط الإجازة في العربية 2025؟
+- سكور الطب في تونس
+- دليل التوجيه الجامعي 2025 اختصاص إعلامية
+- أحسن سكور للرياضيات في المنستير
+- Quels sont les débouchés pour la licence en arabe ?
+- Donne-moi le score de l'ISG Tunis pour 2024.
+- Y a-t-il des tests spéciaux pour le design ?
+- Droit à Sousse bac économie score
+
+6. STRESS TESTS & LOGIC
+- "scors 2025 liscense de droit" (Intentional typos)
+- Are there any certificates with a score of 0 in 2025?
+- Search for 'Artificial Intelligence'—if it exists, where is it taught?
+- univ tunis el manar scores
