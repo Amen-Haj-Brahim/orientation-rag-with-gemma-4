@@ -2,7 +2,7 @@ import os
 import threading
 from typing import Any, Dict, List
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, asyncio
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -99,7 +99,7 @@ def health():
 
 
 @app.post("/ask", response_model=AnswerResponse)
-def ask(request: QuestionRequest):
+async def ask(request: QuestionRequest):
     question = normalize_arabic_text(request.question.strip())
 
     if not question:
@@ -107,7 +107,7 @@ def ask(request: QuestionRequest):
 
     try:
         rag_pipeline = _get_rag_pipeline()
-        result = answer_question(rag_pipeline, question)
+        result = await asyncio.to_thread(answer_question, rag_pipeline, question)
     except SystemExit as exc:
         raise HTTPException(status_code=500, detail="RAG initialization failed.") from exc
     except Exception as exc:

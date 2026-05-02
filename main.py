@@ -18,28 +18,30 @@ def configure_console():
 
 def load_config():
     load_dotenv()
-    
-    # Try to get API key from Streamlit secrets first, then fall back to environment variables
-    api_key = None
+
+    secrets = {}
     try:
-        api_key = st.secrets.get("GOOGLE_API_KEY")
-    except:
+        secrets = dict(st.secrets)
+    except Exception:
         pass
-    
-    if not api_key:
-        api_key = os.getenv("GOOGLE_API_KEY")
+
+    def setting(name: str, default: str = "") -> str:
+        return str(secrets.get(name) or os.getenv(name, default))
     
     return {
-        "api_key": api_key,
-        "csv_directory": os.getenv("CSV_DIRECTORY", "data"),
-        "chroma_db_dir": os.getenv("CHROMA_DB_DIR", "chroma_db"),
-        "embedding_model": os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
-        "gemma_model": os.getenv("GEMMA_MODEL", "gemma-4-26b-a4b-it"),
-        "chunk_size": int(os.getenv("CHUNK_SIZE", "3000")),
-        "chunk_overlap": int(os.getenv("CHUNK_OVERLAP", "500")),
-        "csv_document_mode": os.getenv("CSV_DOCUMENT_MODE", "summary"),
-        "embedding_batch_size": int(os.getenv("EMBEDDING_BATCH_SIZE", "50")),
-        "embedding_requests_per_minute": int(os.getenv("EMBEDDING_REQUESTS_PER_MINUTE", "60"))
+        "api_key": setting("GOOGLE_API_KEY"),
+        "csv_directory": setting("CSV_DIRECTORY", "data"),
+        "chroma_db_dir": setting("CHROMA_DB_DIR", "chroma_db"),
+        "embedding_provider": setting("EMBEDDING_PROVIDER", "gemini"),
+        "embedding_model": setting("EMBEDDING_MODEL", "gemini-embedding-001"),
+        "local_embedding_model": setting("LOCAL_EMBEDDING_MODEL", "intfloat/multilingual-e5-small"),
+        "local_embedding_device": setting("LOCAL_EMBEDDING_DEVICE", "cpu"),
+        "gemma_model": setting("GEMMA_MODEL", "gemma-4-26b-a4b-it"),
+        "chunk_size": int(setting("CHUNK_SIZE", "1000")),
+        "chunk_overlap": int(setting("CHUNK_OVERLAP", "100")),
+        "csv_document_mode": setting("CSV_DOCUMENT_MODE", "summary"),
+        "embedding_batch_size": int(setting("EMBEDDING_BATCH_SIZE", "50")),
+        "embedding_requests_per_minute": int(setting("EMBEDDING_REQUESTS_PER_MINUTE", "60")),
     }
 
 
@@ -52,7 +54,13 @@ def initialize_rag(config: dict, force_reindex: bool = False):
         sys.exit(1)
     
     print("Initializing embeddings model...")
-    embeddings = create_embeddings_model(api_key, config["embedding_model"])
+    embeddings = create_embeddings_model(
+        api_key,
+        model=config["embedding_model"],
+        provider=config["embedding_provider"],
+        local_model=config["local_embedding_model"],
+        local_device=config["local_embedding_device"],
+    )
     
     vector_store = None
     if force_reindex and os.path.exists(config["chroma_db_dir"]):
@@ -93,6 +101,18 @@ def initialize_rag(config: dict, force_reindex: bool = False):
             config["chunk_overlap"]
         )
         
+        print("\nIndexing config:")
+        print(f"  Embedding provider: {config['embedding_provider']}")
+        print(f"  Gemini embedding model: {config['embedding_model']}")
+        print(f"  Local embedding model: {config['local_embedding_model']}")
+        print(f"  Local embedding device: {config['local_embedding_device']}")
+        print(f"  CSV document mode: {config['csv_document_mode']}")
+        print(f"  Chunk size: {config['chunk_size']}")
+        print(f"  Chunk overlap: {config['chunk_overlap']}")
+        print(f"  Embedding batch size: {config['embedding_batch_size']}")
+        print(f"  Documents loaded: {len(documents)}")
+        print(f"  Chunks to embed: {len(chunks)}\n")
+
         print("Creating vector store...")
         vector_store = create_vector_store(
             chunks,
@@ -100,7 +120,6 @@ def initialize_rag(config: dict, force_reindex: bool = False):
             config["chroma_db_dir"],
             collection_name="csv_documents",
             batch_size=config["embedding_batch_size"],
-            requests_per_minute=config["embedding_requests_per_minute"]
         )
     
     print("Creating retriever...")

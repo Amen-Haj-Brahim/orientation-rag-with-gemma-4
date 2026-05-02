@@ -11,6 +11,14 @@ def _clean_value(value) -> str:
     return str(value).strip()
 
 
+def _first(row: dict, *keys: str) -> str:
+    for key in keys:
+        value = row.get(key, "")
+        if value:
+            return value
+    return ""
+
+
 def load_csv_file(file_path: str, document_mode: str = "summary") -> List[Document]:
     documents = []
 
@@ -28,19 +36,30 @@ def load_csv_file(file_path: str, document_mode: str = "summary") -> List[Docume
         for idx, row in df.iterrows():
             row_dict = {key: _clean_value(value) for key, value in row.to_dict().items()}
 
-            row_id = row_dict.get("id", "")
-            code = row_dict.get("cod", "")
-            cert_ar = row_dict.get("certifar", "")
-            cert_fr = row_dict.get("certiffr", "")
-            domain = row_dict.get("dom", "")
-            university = row_dict.get("univ", "")
-            faculty = row_dict.get("etab", "")
-            governorate = row_dict.get("gouv", "")
-            duration = row_dict.get("duree", "")
-            bac = row_dict.get("bac", "")
-            score2024 = row_dict.get("score2024", "")
-            university_horizon = row_dict.get("horiuniv", "")
-            professional_horizon = row_dict.get("horiprof", "")
+            row_id = _first(row_dict, "id", "عدد")
+            code = _first(row_dict, "cod", "الرمز")
+            cert_ar = _first(row_dict, "certifar", "اسم الشهادة بالعربية")
+            cert_fr = _first(row_dict, "certiffr", "nom certificat en français", "nom certificat en franÃ§ais")
+            domain = _first(row_dict, "dom", "المجال")
+            university = _first(row_dict, "univ", "الجامعة")
+            faculty = _first(row_dict, "etab", "المؤسسة")
+            governorate = _first(row_dict, "gouv", "الولاية")
+            duration = _first(row_dict, "duree", "مدة الدراسة")
+            specializations = _first(row_dict, "parcar", "التخصصات")
+            bac = _first(row_dict, "bac", "نوع البكالوريا")
+            bonus = _first(row_dict, "bon", "التنفيل الجغرافي")
+            test_required = _first(row_dict, "test", "تتطلب اختبارات")
+            special_conditions = _first(row_dict, "cond", "لها شروط خاصة")
+            formula = _first(row_dict, "frml", "صيغة مجموع النقاط")
+            formula_explanation = _first(row_dict, "expl", "تفسير صيغة مجموع النقاط")
+            university_horizon = _first(row_dict, "horiuniv", "الآفاق الجامعية")
+            professional_horizon = _first(row_dict, "horiprof", "الآفاق المهنية")
+            scores = {
+                year: row_dict.get(f"score{year}", "")
+                for year in range(2019, 2026)
+                if row_dict.get(f"score{year}", "")
+            }
+            score_lines = "\n".join(f"Score {year}: {score}" for year, score in scores.items())
 
             summary = f"""
 رمز البرنامج: {code}
@@ -51,8 +70,14 @@ Programme: {cert_fr}
 المؤسسة: {faculty}
 الولاية: {governorate}
 المدة: {duration}
+التخصصات: {specializations}
 متطلبات البكالوريا: {bac}
-Score 2024: {score2024}
+التنفيل الجغرافي: {bonus}
+تتطلب اختبارات: {test_required}
+لها شروط خاصة: {special_conditions}
+صيغة مجموع النقاط: {formula}
+تفسير صيغة مجموع النقاط: {formula_explanation}
+{score_lines}
 الآفاق الجامعية: {university_horizon}
 الآفاق المهنية: {professional_horizon}
 """
@@ -69,6 +94,8 @@ Score 2024: {score2024}
                 "faculty": faculty,
                 "domain": domain,
                 "governorate": governorate,
+                "bac": bac,
+                "score2025": scores.get(2025, ""),
             }
 
             documents.append(

@@ -40,10 +40,8 @@ def get_source_rows(source_documents):
 st.title("Orientation RAG")
 st.caption("Ask questions about programs, universities, scores, duration, and career paths.")
 
+force_reindex = False
 with st.sidebar:
-    st.header("Index")
-    st.write("Uses the existing Chroma database by default.")
-    force_reindex = st.toggle("Force reindex on load", value=False)
     if st.button("Clear chat"):
         st.session_state.messages = []
         st.rerun()
@@ -62,7 +60,7 @@ for message in st.session_state.messages:
         st.write(message["content"])
         if message.get("sources"):
             with st.expander("Sources"):
-                st.dataframe(message["sources"], use_container_width=True, hide_index=True)
+                st.dataframe(message["sources"], width="stretch", hide_index=True)
 
 question = st.chat_input("Ask a question...")
 
@@ -80,7 +78,7 @@ if question:
                 st.write(result["answer"])
                 if source_rows:
                     with st.expander("Sources"):
-                        st.dataframe(source_rows, use_container_width=True, hide_index=True)
+                        st.dataframe(source_rows, width="stretch", hide_index=True)
                 st.session_state.messages.append(
                     {
                         "role": "assistant",
