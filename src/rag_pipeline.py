@@ -1,5 +1,6 @@
+import time
+
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables.passthrough import RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
@@ -33,25 +34,38 @@ def create_rag_pipeline(llm: ChatGoogleGenerativeAI, retriever, template: str = 
             )
         return "\n\n".join(formatted_docs)
 
-    return (
-        RunnablePassthrough()
-        .assign(source_documents=lambda x: retriever.invoke(x["input"]))
-        .assign(context=lambda x: format_docs(x["source_documents"]))
-        .assign(
-            answer=(
-                lambda x: {"context": x["context"], "question": x["input"]}
-            )
-            | prompt
-            | llm
-        )
-    )
+    def run(inputs):
+        question = inputs["input"]
+        timings = {}
+
+        start = time.perf_counter()
+        source_documents = retriever.invoke(question)
+        timings["retrieval_seconds"] = time.perf_counter() - start
+
+        start = time.perf_counter()
+        context = format_docs(source_documents)
+        prompt_value = prompt.invoke({"context": context, "question": question})
+        timings["prompt_seconds"] = time.perf_counter() - start
+
+        start = time.perf_counter()
+        answer = llm.invoke(prompt_value)
+        timings["llm_seconds"] = time.perf_counter() - start
+        timings["total_seconds"] = sum(timings.values())
+
+        return {
+            "answer": answer,
+            "source_documents": source_documents,
+            "timings": timings,
+        }
+
+    return run
 
 
 def create_gemma_llm(
     api_key: str,
     model: str = "gemma-4-26b-a4b-it",
     temperature: float = 0.3,
-    max_tokens: int = 1024,
+    max_tokens: int = 512,
 ) -> ChatGoogleGenerativeAI:
     return ChatGoogleGenerativeAI(
         model=model,
@@ -63,11 +77,16 @@ def create_gemma_llm(
 
 
 def answer_question(rag_pipeline, question: str) -> dict:
-    result = rag_pipeline.invoke({"input": question})
+    if hasattr(rag_pipeline, "invoke"):
+        result = rag_pipeline.invoke({"input": question})
+    else:
+        result = rag_pipeline({"input": question})
     source_documents = []
+    timings = {}
 
     if isinstance(result, dict):
         source_documents = result.get("source_documents", [])
+        timings = result.get("timings", {})
         result = result.get("answer", "")
 
     if hasattr(result, "content"):
@@ -82,11 +101,13 @@ def answer_question(rag_pipeline, question: str) -> dict:
     return {
         "answer": clean_answer,
         "source_documents": source_documents,
+        "timings": timings,
     }
 
 
 def format_answer(result: dict) -> str:
     answer = result["answer"]
+    timings = result.get("timings", {})
     source_files = {
         doc.metadata["source_file"]
         for doc in result["source_documents"]
@@ -94,6 +115,12 @@ def format_answer(result: dict) -> str:
     }
 
     formatted = f"**Answer:**\n{answer}\n\n"
+    if timings:
+        formatted += "**Timings:**\n"
+        for name, value in timings.items():
+            formatted += f"- {name.replace('_seconds', '')}: {value:.2f}s\n"
+        formatted += "\n"
+
     if source_files:
         formatted += "**Sources:**\n"
         for source in sorted(source_files):

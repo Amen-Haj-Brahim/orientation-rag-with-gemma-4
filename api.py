@@ -28,6 +28,7 @@ class SourceRow(BaseModel):
 class AnswerResponse(BaseModel):
     answer: str
     sources: List[SourceRow]
+    timings: Dict[str, float] = {}
 
 
 class HealthResponse(BaseModel):
@@ -116,4 +117,5 @@ async def ask(request: QuestionRequest):
     return AnswerResponse(
         answer=result["answer"],
         sources=_format_sources(result.get("source_documents", [])),
+        timings=result.get("timings", {}),
     )

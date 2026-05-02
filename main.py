@@ -123,7 +123,7 @@ def initialize_rag(config: dict, force_reindex: bool = False):
         )
     
     print("Creating retriever...")
-    retriever = get_retriever(vector_store, {"k": 10})
+    retriever = get_retriever(vector_store, {"k": 5})
     
     print("Initializing Gemma model...")
     llm = create_gemma_llm(api_key, config["gemma_model"])

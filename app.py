@@ -76,6 +76,14 @@ if question:
                 result = answer_question(rag_pipeline, normalize_arabic_text(question))
                 source_rows = get_source_rows(result.get("source_documents", []))
                 st.write(result["answer"])
+                timings = result.get("timings", {})
+                if timings:
+                    st.caption(
+                        " | ".join(
+                            f"{name.replace('_seconds', '')}: {value:.2f}s"
+                            for name, value in timings.items()
+                        )
+                    )
                 if source_rows:
                     with st.expander("Sources"):
                         st.dataframe(source_rows, width="stretch", hide_index=True)

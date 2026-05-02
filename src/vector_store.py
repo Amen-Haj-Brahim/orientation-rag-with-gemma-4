@@ -17,8 +17,26 @@ class LocalSentenceTransformerEmbeddings(Embeddings):
             ) from exc
 
         self.model_name = model_name
-        self.model = SentenceTransformer(model_name, device=device)
+        self.device = self._resolve_device(device)
+        print(f"Local embedding device: {self.device}")
+        self.model = SentenceTransformer(model_name, device=self.device)
         self.uses_e5_prefix = "e5" in model_name.lower()
+
+    def _resolve_device(self, device: str) -> str:
+        if device != "cuda":
+            return device
+
+        try:
+            import torch
+        except ImportError:
+            print("CUDA requested, but torch is not installed. Falling back to CPU.")
+            return "cpu"
+
+        if not torch.cuda.is_available():
+            print("CUDA requested, but torch.cuda.is_available() is false. Falling back to CPU.")
+            return "cpu"
+
+        return "cuda"
 
     def _prepare_documents(self, texts: List[str]) -> List[str]:
         if not self.uses_e5_prefix:
@@ -85,21 +103,18 @@ def create_vector_store(
         end = min(start + batch_size, total)
         batch = documents[start:end]
 
-        # Retry logic loop
         while True:
             try:
                 vector_store.add_documents(batch)
                 print(f"Embedded documents {end}/{total}")
-                # Short break between batches to stay under the RPM
-                time.sleep(2) 
-                break 
+                break
             except Exception as e:
                 if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print(f"Quota exceeded. Sleeping for 60s...")
+                    print("Quota exceeded. Sleeping for 60s...")
                     time.sleep(60)
                 else:
                     print(f"Unexpected error: {e}")
-                    raise e
+                    raise
     
     return vector_store
 
