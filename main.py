@@ -3,6 +3,7 @@ import shutil
 import sys
 from dotenv import load_dotenv
 from src.csv_loader import load_csv_from_directory
+from src.pdf_loader import load_pdfs_from_directory
 from src.text_splitter import split_documents, normalize_arabic_text
 from src.vector_store import create_embeddings_model, create_vector_store, load_vector_store, get_retriever
 from src.rag_pipeline import create_gemma_llm, create_rag_pipeline, answer_question, format_answer
@@ -40,6 +41,8 @@ def load_config():
         "chunk_size": int(setting("CHUNK_SIZE", "1000")),
         "chunk_overlap": int(setting("CHUNK_OVERLAP", "100")),
         "csv_document_mode": setting("CSV_DOCUMENT_MODE", "summary"),
+        "include_pdfs": setting("INCLUDE_PDFS", "false").lower() == "true",
+        "pdf_min_chars": int(setting("PDF_MIN_CHARS", "120")),
         "embedding_batch_size": int(setting("EMBEDDING_BATCH_SIZE", "50")),
         "embedding_requests_per_minute": int(setting("EMBEDDING_REQUESTS_PER_MINUTE", "60")),
     }
@@ -89,6 +92,14 @@ def initialize_rag(config: dict, force_reindex: bool = False):
         if not documents:
             print("Error: No CSV documents were loaded. Check CSV_DIRECTORY and file encoding.")
             sys.exit(1)
+
+        if config["include_pdfs"]:
+            print(f"Loading PDF files from: {config['csv_directory']}")
+            pdf_documents = load_pdfs_from_directory(
+                config["csv_directory"],
+                min_chars=config["pdf_min_chars"],
+            )
+            documents.extend(pdf_documents)
         
         print("Normalizing Arabic text...")
         for doc in documents:
@@ -107,6 +118,8 @@ def initialize_rag(config: dict, force_reindex: bool = False):
         print(f"  Local embedding model: {config['local_embedding_model']}")
         print(f"  Local embedding device: {config['local_embedding_device']}")
         print(f"  CSV document mode: {config['csv_document_mode']}")
+        print(f"  Include PDFs: {config['include_pdfs']}")
+        print(f"  PDF min chars: {config['pdf_min_chars']}")
         print(f"  Chunk size: {config['chunk_size']}")
         print(f"  Chunk overlap: {config['chunk_overlap']}")
         print(f"  Embedding batch size: {config['embedding_batch_size']}")

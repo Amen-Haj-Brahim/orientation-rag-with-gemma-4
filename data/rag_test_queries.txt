@@ -42,3 +42,50 @@ RAG TEST QUERIES: TUNISIAN BAC ORIENTATION (guide_14-8-2025.csv)
 - Are there any certificates with a score of 0 in 2025?
 - Search for 'Artificial Intelligence'—if it exists, where is it taught?
 - univ tunis el manar scores
+
+
+
+7. PDF GUIDE QUESTIONS
+
+- What are the main orientation rounds mentioned in the guide?
+- How can a student get the password for university orientation?
+- What is the global formula FG used for?
+- What does the total score T mean in the orientation process?
+- What are the steps for filling the orientation choices card?
+- When is the main university orientation round?
+- What are the special exam fields mentioned in the guide?
+- What should students with a foreign baccalaureate do for orientation?
+- What information does the guide give about reorientation?
+- What services are mentioned for new university students?
+
+8. CAPACITY GUIDE QUESTIONS
+
+- What is the capacity guide for the main orientation round?
+- What is the capacity guide for the final orientation round?
+- Which institutions are listed under code 10101?
+- Which baccalaureate types are listed for Licence en Arabe?
+- What universities appear in the capacity guide for arts programs?
+- Which programs are available for bac Math in the capacity guide?
+- Find programs in Sousse from the capacity guide.
+- Find programs in Tunis El Manar from the capacity guide.
+- What institutions are listed for code 30101?
+- What codes are listed near arts and humanities programs?
+
+9. MIXED CSV + PDF QUESTIONS
+
+- Compare the score information in the CSV with the capacity guide for Licence en Arabe.
+- What does the guide say about orientation procedures, and what is the score for Licence en Arabe in 2025?
+- Which programs require tests according to the CSV, and where does the PDF mention special exams?
+- Give me the score and institution for Licence en Droit, then explain the orientation round process.
+- For bac Math, what programs appear in the CSV and what does the PDF guide say about orientation choices?
+
+
+
+What are the steps for filling the orientation choices card?
+
+
+What does the total score T mean in the orientation process?
+
+
+
+What is the capacity guide for the main orientation round?
