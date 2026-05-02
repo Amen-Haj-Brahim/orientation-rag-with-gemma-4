@@ -1,8 +1,8 @@
 import os
 import threading
 from typing import Any, Dict, List
-
-from fastapi import FastAPI, HTTPException, asyncio
+import asyncio
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
